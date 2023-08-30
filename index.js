@@ -20,9 +20,19 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     //---------All collection here---------
+    const usersCollection = client.db("ShovonGallery").collection("users");
     app.get("/", async (req, res) => {
       console.log("Shovon's Gallery server is running");
       res.send("Server runing");
+    });
+
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const users = await usersCollection
+        .find(query)
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(users);
     });
   } finally {
   }
