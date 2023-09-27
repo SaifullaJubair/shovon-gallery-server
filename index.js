@@ -21,11 +21,13 @@ async function run() {
   try {
     //---------All collection here---------
     const usersCollection = client.db("ShovonGallery").collection("users");
+
     app.get("/", async (req, res) => {
       console.log("Shovon's Gallery server is running");
       res.send("Server runing");
     });
 
+    // user api get
     app.get("/users", async (req, res) => {
       const query = {};
       const users = await usersCollection
@@ -33,6 +35,20 @@ async function run() {
         .sort({ createdAt: -1 })
         .toArray();
       res.send(users);
+    });
+
+    // user api post
+    app.post("/adduser", async (req, res) => {
+      const user = req.body;
+      // console.log(user);
+      const query = { email: req.body.email };
+      const alreadyLoggedIn = await usersCollection.findOne(query);
+
+      if (alreadyLoggedIn)
+        return res.send({ message: "User already logged in!" });
+
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
     });
   } finally {
   }
