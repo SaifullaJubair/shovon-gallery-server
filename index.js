@@ -21,6 +21,7 @@ async function run() {
   try {
     //---------All collection here---------
     const usersCollection = client.db("ShovonGallery").collection("users");
+    const productCollection = client.db("ShovonGallery").collection("products");
 
     app.get("/", async (req, res) => {
       console.log("Shovon's Gallery server is running");
@@ -49,6 +50,19 @@ async function run() {
 
       const result = await usersCollection.insertOne(user);
       res.send(result);
+    });
+
+    // Add Product
+    app.post("/products", async (req, res) => {
+      const doc = req.body;
+      const result = await productCollection.insertOne(doc);
+      res.send(result);
+    });
+
+    app.get("/products", async (req, res) => {
+      const query = {};
+      const products = await productCollection.find(query).toArray();
+      res.send(products);
     });
   } finally {
   }
