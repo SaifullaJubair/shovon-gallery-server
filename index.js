@@ -76,6 +76,15 @@ async function run() {
       res.send(result);
     });
 
+    // Delete Single Product
+
+    app.delete("/singleproperty/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await productCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     // categories
 
     app.get("/allcategories", async (req, res) => {
