@@ -139,6 +139,15 @@ async function run() {
       if (result === null) return res.send({ message: "There is no data" });
       return res.send(result);
     });
+
+    // Delete MyWishlist
+    app.delete("/mywishlist/:id", async (req, res) => {
+      const { id } = req.params;
+      const { email } = req.query;
+      const query = { propertyId: id, userEmail: email };
+      const result = await wishListCollection.deleteOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
