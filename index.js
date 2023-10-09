@@ -127,6 +127,18 @@ async function run() {
       const result = await categoriesCollection.deleteOne(filter);
       res.send(result);
     });
+
+    // ====== Wishlist ========== //
+
+    // get a wishlist
+    app.get("/wishlist/:id", async (req, res) => {
+      const { id } = req.params;
+      const { email } = req.query;
+      const query = { propertyId: id, userEmail: email };
+      const result = await wishListCollection.findOne(query);
+      if (result === null) return res.send({ message: "There is no data" });
+      return res.send(result);
+    });
   } finally {
   }
 }
