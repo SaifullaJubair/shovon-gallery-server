@@ -26,6 +26,9 @@ async function run() {
       .db("ShovonGallery")
       .collection("categories");
     const qnaCollection = client.db("ShovonGallery").collection("qna");
+    const wishListCollection = client
+      .db("ShovonGallery")
+      .collection("wishlist");
 
     app.get("/", async (req, res) => {
       console.log("Shovon's Gallery server is running");
@@ -140,6 +143,28 @@ async function run() {
       if (result === null) return res.send({ message: "There is no data" });
       return res.send(result);
     });
+    // add wish list
+    app.post("/add-wishlist", async (req, res) => {
+      const wishItem = req.body;
+      console.log(req.body);
+      const query = {
+        userId: req.body.userId,
+        userEmail: req.body.userEmail,
+        propertyId: req.body.propertyId,
+      };
+
+      const alreadyAddedWishlist = await wishListCollection.findOne(query);
+
+      if (alreadyAddedWishlist)
+        return res.send({
+          message: "This property already wishlisted",
+        });
+
+      const result = await wishListCollection.insertOne(wishItem);
+
+      res.send(result);
+    });
+
     // delete a wishlist
     app.delete("/wishlist/:id", async (req, res) => {
       const { id } = req.params;
