@@ -135,12 +135,19 @@ async function run() {
     app.get("/wishlist/:id", async (req, res) => {
       const { id } = req.params;
       const { email } = req.query;
-      const query = { propertyId: id, userEmail: email };
+      const query = { productId: id, userEmail: email };
       const result = await wishListCollection.findOne(query);
       if (result === null) return res.send({ message: "There is no data" });
       return res.send(result);
     });
-
+    // delete a wishlist
+    app.delete("/wishlist/:id", async (req, res) => {
+      const { id } = req.params;
+      const { email } = req.query;
+      const query = { productId: id, userEmail: email };
+      const result = await wishListCollection.deleteOne(query);
+      res.send(result);
+    });
     // Delete MyWishlist
     app.delete("/mywishlist/:id", async (req, res) => {
       const { id } = req.params;
@@ -150,16 +157,80 @@ async function run() {
       res.send(result);
     });
 
+    // Admin All Wishlist
+    app.get("/wishlist", async (req, res) => {
+      const wishlist = await wishListCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(wishlist);
+    });
+
     // ======== Wishlist End Here ======== //
 
     // ======== QnA Start here ====== //
 
     // all Qna get
-    app.get("/allqna", async (req, res) => {
+    app.get("/allcomments/", async (req, res) => {
       const result = await qnaCollection
         .find()
         .sort({ createdAt: -1 })
         .toArray();
+      res.send(result);
+    });
+
+    //comment get by id
+    app.get("/comment/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { propertyId: id };
+      const cursor = commentCollection.find(query).limit(10);
+      const result = await cursor.sort({ createdAt: -1 }).toArray();
+      res.send(result);
+    });
+    app.get("/comments/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { email: id };
+      const cursor = commentCollection.find(query);
+      const result = await cursor.sort({ createdAt: -1 }).toArray();
+      res.send(result);
+    });
+    // add comment post
+    app.post("/addcomment", async (req, res) => {
+      const comment = req.body;
+      // console.log(comment);
+      const result = await commentCollection.insertOne(comment);
+      res.send(result);
+    });
+
+    //comment update by it
+    app.put("/commentupdate/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const user = req.body;
+      const option = { upsert: true };
+      console.log(user);
+      console.log(id);
+      const updatedUser = {
+        $set: {
+          comment: user?.commentUpdate,
+        },
+      };
+      const result = await commentCollection.updateOne(
+        filter,
+        updatedUser,
+        option
+      );
+      console.log(result);
+      res.send(result);
+      // console.log(updatedUser)
+    });
+
+    // comment delete by id
+    app.delete("/comment/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await commentCollection.deleteOne(filter);
       res.send(result);
     });
   } finally {
