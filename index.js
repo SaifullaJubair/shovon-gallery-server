@@ -153,6 +153,15 @@ async function run() {
     // ======== Wishlist End Here ======== //
 
     // ======== QnA Start here ====== //
+
+    // all Qna get
+    app.get("/allqna", async (req, res) => {
+      const result = await qnaCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(result);
+    });
   } finally {
   }
 }
