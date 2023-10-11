@@ -25,6 +25,7 @@ async function run() {
     const categoriesCollection = client
       .db("ShovonGallery")
       .collection("categories");
+    const qnaCollection = client.db("ShovonGallery").collection("qna");
 
     app.get("/", async (req, res) => {
       console.log("Shovon's Gallery server is running");
@@ -148,6 +149,10 @@ async function run() {
       const result = await wishListCollection.deleteOne(query);
       res.send(result);
     });
+
+    // ======== Wishlist End Here ======== //
+
+    // ======== QnA Start here ====== //
   } finally {
   }
 }
