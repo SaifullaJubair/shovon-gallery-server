@@ -59,6 +59,14 @@ async function run() {
       res.send(result);
     });
 
+    // single user by email
+
+    app.get("/singleuser/:e", async (req, res) => {
+      const e = req.params.e;
+      const query = { email: e };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
     // All Products
 
     app.get("/products", async (req, res) => {
@@ -150,7 +158,7 @@ async function run() {
       const query = {
         userId: req.body.userId,
         userEmail: req.body.userEmail,
-        propertyId: req.body.propertyId,
+        productId: req.body.productId,
       };
 
       const alreadyAddedWishlist = await wishListCollection.findOne(query);
