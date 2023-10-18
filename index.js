@@ -34,7 +34,7 @@ async function run() {
       console.log("Shovon's Gallery server is running");
       res.send("Server runing");
     });
-
+    // === USER API START HERE ==== //
     // user api get
     app.get("/users", async (req, res) => {
       const query = {};
@@ -67,7 +67,30 @@ async function run() {
       const result = await usersCollection.findOne(query);
       res.send(result);
     });
-    // All Products
+
+    // single user api update
+
+    app.put("/edituser", async (req, res) => {
+      const data = req.body;
+      const filter = { email: data?.email };
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          address: data?.address,
+          mobileNumber: data?.mobileNumber,
+        },
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        updatedDoc,
+        option
+      );
+      res.send(result);
+    });
+
+    // ===== USER API END HERE ====== //
+
+    //====== ALL PRODUCT API START HERE ======= //
 
     app.get("/products", async (req, res) => {
       const query = {};
@@ -96,6 +119,10 @@ async function run() {
       const result = await productCollection.deleteOne(filter);
       res.send(result);
     });
+
+    // ====== ALL PRODUCT API END HERE ======= //
+
+    // ====== ALL CATEGORY API START HERE ======= //
 
     // categories
 
@@ -140,7 +167,9 @@ async function run() {
       res.send(result);
     });
 
-    // ====== Wishlist ========== //
+    // ====== ALL CATEGORY API END HERE ======= //
+
+    // ====== ALL WISH LIST API START HERE  ========== //
 
     // get a wishlist
     app.get("/wishlist/:id", async (req, res) => {
@@ -199,9 +228,9 @@ async function run() {
       res.send(wishlist);
     });
 
-    // ======== Wishlist End Here ======== //
+    // ======== ALL WISH LIST API End Here ======== //
 
-    // ======== QnA Start here ====== //
+    // ======== QnA API START HERE ====== //
 
     // all Qna get
     app.get("/allcomments/", async (req, res) => {
@@ -211,6 +240,9 @@ async function run() {
         .toArray();
       res.send(result);
     });
+    // ====== ALL QnA API END HERE ======= //
+
+    // ====== ALL COMMENT API START HERE ======= //
 
     //comment get by id
     app.get("/comment/:id", async (req, res) => {
@@ -266,6 +298,8 @@ async function run() {
       const result = await commentCollection.deleteOne(filter);
       res.send(result);
     });
+
+    // ====== ALL COMMENT API END HERE ======= //
   } finally {
   }
 }
