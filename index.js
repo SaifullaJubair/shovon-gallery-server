@@ -112,6 +112,22 @@ async function run() {
       const result = await usersCollection.deleteOne(filter);
       res.send(result);
     });
+
+    // User Role Check api
+
+    app.get("/users/checkBuyer", async (req, res) => {
+      const query = { email: req.query.email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isBuyer: user?.role === "user" });
+    });
+
+    app.get("/users/checkAdmin", async (req, res) => {
+      const query = { email: req.query.email };
+      const user = await usersCollection.findOne(query);
+      console.log(user, "ok");
+      res.send({ isAdmin: user?.role === "admin" });
+    });
+
     // ===== USER API END HERE ====== //
 
     //====== ALL PRODUCT API START HERE ======= //
