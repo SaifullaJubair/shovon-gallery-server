@@ -34,7 +34,9 @@ async function run() {
       console.log("Shovon's Gallery server is running");
       res.send("Server runing");
     });
-    // === USER API START HERE ==== //
+
+    // ===== USER API START HERE ==== //
+
     // user api get
     app.get("/users", async (req, res) => {
       const query = {};
@@ -88,6 +90,28 @@ async function run() {
       res.send(result);
     });
 
+    // Update user role from dashboard
+    app.post("/users/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const userRole = req.headers.role;
+      const filter = { _id: new ObjectId(id) };
+      // const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          role: userRole,
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    // User delete from dashboard
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    });
     // ===== USER API END HERE ====== //
 
     //====== ALL PRODUCT API START HERE ======= //
