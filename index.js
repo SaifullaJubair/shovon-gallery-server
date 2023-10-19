@@ -124,7 +124,7 @@ async function run() {
     app.get("/users/checkAdmin", async (req, res) => {
       const query = { email: req.query.email };
       const user = await usersCollection.findOne(query);
-      console.log(user, "ok");
+      // console.log(user, "ok");
       res.send({ isAdmin: user?.role === "admin" });
     });
 
@@ -134,7 +134,10 @@ async function run() {
 
     app.get("/products", async (req, res) => {
       const query = {};
-      const products = await productCollection.find(query).toArray();
+      const products = await productCollection
+        .find(query)
+        .sort({ createdAt: -1 })
+        .toArray();
       res.send(products);
     });
     app.post("/products", async (req, res) => {
@@ -151,9 +154,29 @@ async function run() {
       res.send(result);
     });
 
+    // Update Product
+    app.patch("/update/product/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateFields = req.body;
+
+      try {
+        const result = await productCollection.updateOne(filter, {
+          $set: updateFields,
+        });
+        res.json({
+          acknowledged: result.acknowledged,
+          modifiedCount: result.modifiedCount,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
     // Delete Single Product
 
-    app.delete("/singleproperty/:id", async (req, res) => {
+    app.delete("/singleproduct/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await productCollection.deleteOne(filter);
@@ -223,7 +246,7 @@ async function run() {
     // add wish list
     app.post("/add-wishlist", async (req, res) => {
       const wishItem = req.body;
-      console.log(req.body);
+      // console.log(req.body);
       const query = {
         userId: req.body.userId,
         userEmail: req.body.userEmail,
@@ -314,8 +337,8 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const user = req.body;
       const option = { upsert: true };
-      console.log(user);
-      console.log(id);
+      // console.log(user);
+      // console.log(id);
       const updatedUser = {
         $set: {
           comment: user?.commentUpdate,
@@ -326,7 +349,7 @@ async function run() {
         updatedUser,
         option
       );
-      console.log(result);
+      // console.log(result);
       res.send(result);
       // console.log(updatedUser)
     });
