@@ -243,6 +243,46 @@ async function run() {
       if (result === null) return res.send({ message: "There is no data" });
       return res.send(result);
     });
+
+    // get my wishlist in dashboard
+    // app.get("/mywishlist/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { userEmail: email };
+    //   const cursor = wishListCollection.find(query);
+    //   const wishlist = await cursor.sort({ createdAt: -1 }).toArray();
+    //   if (wishlist === null) return res.send({ message: "There is no data" });
+    //   res.send(wishlist);
+    // });
+
+    app.get("/mywishlist/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        const query = { userEmail: email };
+        const cursor = wishListCollection.find(query);
+        const wishlist = await cursor.sort({ createdAt: -1 }).toArray();
+
+        // Extracting product IDs from the wishlist
+        const productIds = wishlist.map((item) => item.productId);
+
+        // Finding products that match the extracted product IDs
+        const products = await productCollection
+          .find({ _id: { $in: productIds.map((id) => new ObjectId(id)) } })
+          .toArray();
+
+        // Merging wishlist items with corresponding product details
+        const mergedData = wishlist.map((item) => {
+          const product = products.find(
+            (product) => product._id.toString() === item.productId
+          );
+          return { ...item, product };
+        });
+
+        res.send(mergedData);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
     // add wish list
     app.post("/add-wishlist", async (req, res) => {
       const wishItem = req.body;
@@ -270,14 +310,6 @@ async function run() {
       const { id } = req.params;
       const { email } = req.query;
       const query = { productId: id, userEmail: email };
-      const result = await wishListCollection.deleteOne(query);
-      res.send(result);
-    });
-    // Delete MyWishlist
-    app.delete("/mywishlist/:id", async (req, res) => {
-      const { id } = req.params;
-      const { email } = req.query;
-      const query = { propertyId: id, userEmail: email };
       const result = await wishListCollection.deleteOne(query);
       res.send(result);
     });
