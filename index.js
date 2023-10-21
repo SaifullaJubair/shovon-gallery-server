@@ -245,14 +245,6 @@ async function run() {
     });
 
     // get my wishlist in dashboard
-    // app.get("/mywishlist/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { userEmail: email };
-    //   const cursor = wishListCollection.find(query);
-    //   const wishlist = await cursor.sort({ createdAt: -1 }).toArray();
-    //   if (wishlist === null) return res.send({ message: "There is no data" });
-    //   res.send(wishlist);
-    // });
 
     app.get("/mywishlist/:email", async (req, res) => {
       try {
