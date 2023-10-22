@@ -29,6 +29,7 @@ async function run() {
     const wishListCollection = client
       .db("ShovonGallery")
       .collection("wishlist");
+    const cartCollection = client.db("ShovonGallery").collection("cart");
 
     app.get("/", async (req, res) => {
       console.log("Shovon's Gallery server is running");
@@ -270,6 +271,7 @@ async function run() {
         });
 
         res.send(mergedData);
+        // console.log(mergedData);
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal server error" });
@@ -316,6 +318,110 @@ async function run() {
     });
 
     // ======== ALL WISH LIST API End Here ======== //
+
+    // ALL CART API START HERE ===== //
+
+    // get a cart
+    app.get("/cart/:id", async (req, res) => {
+      const { id } = req.params;
+      const { email } = req.query;
+      const query = { productId: id, userEmail: email };
+      const result = await cartCollection.findOne(query);
+      if (result) {
+        res.json(result);
+      } else {
+        res.json({}); // Send an empty object if the product is not in the cart
+      }
+    });
+    // get mycart in dashboard
+
+    app.get("/mycart/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        const query = { userEmail: email };
+        const cursor = cartCollection.find(query);
+        const cart = await cursor.sort({ createdAt: -1 }).toArray();
+
+        // Extracting product IDs from the cart
+        const productIds = cart.map((item) => item.productId);
+
+        // Finding products that match the extracted product IDs
+        const products = await productCollection
+          .find({ _id: { $in: productIds.map((id) => new ObjectId(id)) } })
+          .toArray();
+
+        // Merging cart items with corresponding product details
+        const mergedData = cart.map((item) => {
+          const product = products.find(
+            (product) => product._id.toString() === item.productId
+          );
+          return { ...item, product };
+        });
+
+        res.send(mergedData);
+        // console.log(mergedData);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    // add cart
+    app.post("/add-cart", async (req, res) => {
+      const cart = req.body;
+      // console.log(req.body);
+      const query = {
+        userId: req.body.userId,
+        userEmail: req.body.userEmail,
+        productId: req.body.productId,
+      };
+
+      const alreadyAddedCart = await cartCollection.findOne(query);
+
+      if (alreadyAddedCart)
+        return res.send({
+          message: "This product already added in your cart",
+        });
+
+      const result = await cartCollection.insertOne(cart);
+
+      res.send(result);
+    });
+
+    // update cart quantity
+
+    app.put("/cart/:id", async (req, res) => {
+      const { id } = req.params;
+      const { email } = req.query;
+      const { quantity } = req.body;
+
+      try {
+        const query = { productId: id, userEmail: email };
+        const updatedCart = await cartCollection.findOneAndUpdate(
+          query,
+          { $set: { quantity: quantity } },
+          { returnDocument: "after" } // Returns the updated document
+        );
+
+        if (updatedCart.value) {
+          res.json(updatedCart.value);
+        } else {
+          res.status(404).json({ error: "Cart item not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+    // delete a cart
+    app.delete("/cart/:id", async (req, res) => {
+      const { id } = req.params;
+      const { email } = req.query;
+      const query = { productId: id, userEmail: email };
+      const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    });
+    // ALL CART API END HERE ===== //
 
     // ======== QnA API START HERE ====== //
 
