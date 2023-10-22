@@ -195,6 +195,20 @@ async function run() {
       res.send(result);
     });
 
+    // product show categories wise
+
+    app.get("/category/:categoryName", async (req, res) => {
+      const name = req.params.categoryName;
+      if (name === "All") {
+        const result = await productCollection.find({}).toArray();
+        res.send(result);
+      } else {
+        const result = await productCollection
+          .find({ category: name })
+          .toArray();
+        res.send(result);
+      }
+    });
     // add categories
     app.post("/addcategory", async (req, res) => {
       const name = req.body.name;
