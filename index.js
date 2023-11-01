@@ -25,6 +25,9 @@ async function run() {
     const categoriesCollection = client
       .db("ShovonGallery")
       .collection("categories");
+    const bannerImgCollection = client
+      .db("ShovonGallery")
+      .collection("bannerImg");
     const qnaCollection = client.db("ShovonGallery").collection("qna");
     const wishListCollection = client
       .db("ShovonGallery")
@@ -246,6 +249,20 @@ async function run() {
     });
 
     // ====== ALL CATEGORY API END HERE ======= //
+
+    // ====== ALL BANNER IMAGE API START HERE ======= //
+    app.get("/allBannerImg", async (req, res) => {
+      const result = await bannerImgCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    app.post("/addBannerImg", async (req, res) => {
+      const data = req.body;
+      const result = await bannerImgCollection.insertOne(data);
+      res.send(result);
+      console.log(result);
+    });
+    // ====== ALL BANNER IMAGE API END HERE ======= //
 
     // ====== ALL WISH LIST API START HERE  ========== //
 
