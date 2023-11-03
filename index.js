@@ -260,8 +260,41 @@ async function run() {
       const data = req.body;
       const result = await bannerImgCollection.insertOne(data);
       res.send(result);
-      console.log(result);
     });
+
+    app.delete("/deleteBannerImg", async (req, res) => {
+      const id = req.body._id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await bannerImgCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    app.put("/update/banner", async (req, res) => {
+      const id = req.body._id;
+      const name = req.body.name;
+      const bannerImg = req.body.bannerImg;
+      const status = req.body.status;
+      const post_date = req.body.post_date;
+      const filter = { _id: new ObjectId(id) };
+
+      const updatedDoc = {
+        $set: {
+          name: name,
+          bannerImg: bannerImg,
+          status: status,
+          post_date: post_date,
+        },
+      };
+
+      try {
+        const result = await bannerImgCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
     // ====== ALL BANNER IMAGE API END HERE ======= //
 
     // ====== ALL WISH LIST API START HERE  ========== //
