@@ -28,6 +28,9 @@ async function run() {
     const bannerImgCollection = client
       .db("ShovonGallery")
       .collection("bannerImg");
+    const fixedImgCollection = client
+      .db("ShovonGallery")
+      .collection("fixedImg");
     const qnaCollection = client.db("ShovonGallery").collection("qna");
     const wishListCollection = client
       .db("ShovonGallery")
@@ -288,6 +291,57 @@ async function run() {
 
       try {
         const result = await bannerImgCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    // ====== ALL BANNER IMAGE API END HERE ======= //
+
+    // ====== ALL FIXED IMAGE API START HERE ======= //
+
+    app.get("/allFixedImg", async (req, res) => {
+      const result = await fixedImgCollection
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(result);
+    });
+
+    app.post("/addFixedImg", async (req, res) => {
+      const data = req.body;
+      const result = await fixedImgCollection.insertOne(data);
+      res.send(result);
+    });
+
+    app.delete("/deleteFixedImg", async (req, res) => {
+      const id = req.body._id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await fixedImgCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    app.put("/update/fixedImg", async (req, res) => {
+      const id = req.body._id;
+      const name = req.body.name;
+      const fixedImg = req.body.fixedImg;
+      const status = req.body.status;
+      const post_date = req.body.post_date;
+      const filter = { _id: new ObjectId(id) };
+
+      const updatedDoc = {
+        $set: {
+          name: name,
+          fixedImg: fixedImg,
+          status: status,
+          post_date: post_date,
+        },
+      };
+
+      try {
+        const result = await fixedImgCollection.updateOne(filter, updatedDoc);
         res.send(result);
       } catch (error) {
         console.error(error);
