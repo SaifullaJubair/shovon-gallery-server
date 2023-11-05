@@ -544,11 +544,38 @@ async function run() {
     // ======== QnA API START HERE ====== //
 
     // all Qna get
-    app.get("/allcomments/", async (req, res) => {
+    app.get("/all-qna", async (req, res) => {
       const result = await qnaCollection
         .find()
         .sort({ createdAt: -1 })
         .toArray();
+      res.send(result);
+    });
+
+    app.post("/ask-question", async (req, res) => {
+      const data = req.body;
+      const result = await qnaCollection.insertOne(data);
+      res.send(result);
+    });
+
+    app.delete("/delete-qna", async (req, res) => {
+      const id = req.body._id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await qnaCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    app.put("/reply-question", async (req, res) => {
+      const id = req.body._id;
+      const reply = req.body.reply;
+      const filter = { _id: new ObjectId(id) };
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          reply: reply,
+        },
+      };
+      const result = await qnaCollection.updateOne(filter, updatedDoc, option);
       res.send(result);
     });
     // ====== ALL QnA API END HERE ======= //
