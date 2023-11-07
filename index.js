@@ -32,6 +32,7 @@ async function run() {
       .db("ShovonGallery")
       .collection("fixedImg");
     const qnaCollection = client.db("ShovonGallery").collection("qna");
+    const reviewCollection = client.db("ShovonGallery").collection("review");
     const wishListCollection = client
       .db("ShovonGallery")
       .collection("wishlist");
@@ -165,6 +166,9 @@ async function run() {
             },
             {
               $replaceRoot: { newRoot: "$latestProduct" }, // Replace the root document with the latest product in each category
+            },
+            {
+              $limit: 4, // Limit the output to 4 documents
             },
           ])
           .toArray();
@@ -696,6 +700,36 @@ async function run() {
       res.send(result);
     });
     // ====== ALL QnA API END HERE ======= //
+    // ====== ALL REVIEW API START HERE ======= //
+    app.post("/submit-review", async (req, res) => {
+      const { productId, userId, review, rating, title } = req.body;
+
+      // Validate incoming data (you can add more validation logic as needed)
+      if (!productId || !userId || !review || !rating) {
+        return res.status(400).json({ error: "Invalid data provided" });
+      }
+
+      // Create a new review object
+      const productReview = {
+        productId: productId,
+        userId: userId,
+        review: review,
+        rating: rating,
+        title: title || "", // Optional: If title is not provided, it will be an empty string
+        timestamp: new Date().toISOString(),
+      };
+
+      const result = await reviewCollection.insertOne(productReview);
+      res.send(result);
+
+      // Respond with success message
+    });
+
+    app.get("/product-review", async (req, res) => {
+      const productReview = await reviewCollection.find().toArray();
+      res.send(productReview);
+    });
+    // ====== ALL REVIEW API END HERE ======= //
   } finally {
   }
 }
