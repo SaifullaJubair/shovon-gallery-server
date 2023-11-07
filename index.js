@@ -147,6 +147,64 @@ async function run() {
         .toArray();
       res.send(products);
     });
+
+    // All latest product api
+    // Get latest product from each category using aggregation
+    app.get("/latest-products-by-category", async (req, res) => {
+      try {
+        const latestProductsByCategory = await productCollection
+          .aggregate([
+            {
+              $sort: { postDate: -1 }, // Sort products by postDate in descending order
+            },
+            {
+              $group: {
+                _id: "$category",
+                latestProduct: { $first: "$$ROOT" }, // Get the first (latest) product in each category
+              },
+            },
+            {
+              $replaceRoot: { newRoot: "$latestProduct" }, // Replace the root document with the latest product in each category
+            },
+          ])
+          .toArray();
+
+        res.json(latestProductsByCategory);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    /**
+    * Alternative way to get latest product
+      app.get("/latest-products-by-category", async (req, res) => {
+      try {
+        const categories = await categoriesCollection.find({}).toArray();
+        const latestProductsByCategory = [];
+
+        for (const category of categories) {
+          const latestProduct = await productCollection
+            .find({ category: category.name })
+            .sort({ postDate: -1 })
+            .limit(1)
+            .toArray();
+
+          if (latestProduct.length > 0) {
+            latestProductsByCategory.push({
+              latestProduct: latestProduct[0],
+            });
+          }
+        }
+
+        res.json(latestProductsByCategory);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+    */
+
     app.post("/products", async (req, res) => {
       const doc = req.body;
       const result = await productCollection.insertOne(doc);
