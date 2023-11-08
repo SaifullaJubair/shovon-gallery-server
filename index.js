@@ -47,93 +47,133 @@ async function run() {
 
     // user api get
     app.get("/users", async (req, res) => {
-      const query = {};
-      const users = await usersCollection
-        .find(query)
-        .sort({ postDate: -1 })
-        .toArray();
-      res.send(users);
+      try {
+        const query = {};
+        const users = await usersCollection
+          .find(query)
+          .sort({ postDate: -1 })
+          .toArray();
+        res.send(users);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // user api post
     app.post("/adduser", async (req, res) => {
-      const user = req.body;
-      // console.log(user);
-      const query = { email: req.body.email };
-      const alreadyLoggedIn = await usersCollection.findOne(query);
+      try {
+        const user = req.body;
+        // console.log(user);
+        const query = { email: req.body.email };
+        const alreadyLoggedIn = await usersCollection.findOne(query);
 
-      if (alreadyLoggedIn)
-        return res.send({ message: "User already logged in!" });
+        if (alreadyLoggedIn)
+          return res.send({ message: "User already logged in!" });
 
-      const result = await usersCollection.insertOne(user);
-      res.send(result);
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // single user by email
 
     app.get("/singleuser/:e", async (req, res) => {
-      const e = req.params.e;
-      const query = { email: e };
-      const result = await usersCollection.findOne(query);
-      res.send(result);
+      try {
+        const e = req.params.e;
+        const query = { email: e };
+        const result = await usersCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // single user api update
 
     app.put("/edituser", async (req, res) => {
-      const data = req.body;
-      const filter = { email: data?.email };
-      const option = { upsert: true };
-      const updatedDoc = {
-        $set: {
-          address: data?.address,
-          mobileNumber: data?.mobileNumber,
-        },
-      };
-      const result = await usersCollection.updateOne(
-        filter,
-        updatedDoc,
-        option
-      );
-      res.send(result);
+      try {
+        const data = req.body;
+        const filter = { email: data?.email };
+        const option = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            address: data?.address,
+            mobileNumber: data?.mobileNumber,
+          },
+        };
+        const result = await usersCollection.updateOne(
+          filter,
+          updatedDoc,
+          option
+        );
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // Update user role from dashboard
     app.post("/users/update/:id", async (req, res) => {
-      const id = req.params.id;
-      const userRole = req.headers.role;
-      const filter = { _id: new ObjectId(id) };
-      // const option = { upsert: true };
-      const updatedDoc = {
-        $set: {
-          role: userRole,
-        },
-      };
-      const result = await usersCollection.updateOne(filter, updatedDoc);
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const userRole = req.headers.role;
+        const filter = { _id: new ObjectId(id) };
+        // const option = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            role: userRole,
+          },
+        };
+        const result = await usersCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // User delete from dashboard
     app.delete("/users/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await usersCollection.deleteOne(filter);
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const result = await usersCollection.deleteOne(filter);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // User Role Check api
 
     app.get("/users/checkBuyer", async (req, res) => {
-      const query = { email: req.query.email };
-      const user = await usersCollection.findOne(query);
-      res.send({ isBuyer: user?.role === "user" });
+      try {
+        const query = { email: req.query.email };
+        const user = await usersCollection.findOne(query);
+        res.send({ isBuyer: user?.role === "user" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.get("/users/checkAdmin", async (req, res) => {
-      const query = { email: req.query.email };
-      const user = await usersCollection.findOne(query);
-      // console.log(user, "ok");
-      res.send({ isAdmin: user?.role === "admin" });
+      try {
+        const query = { email: req.query.email };
+        const user = await usersCollection.findOne(query);
+        // console.log(user, "ok");
+        res.send({ isAdmin: user?.role === "admin" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // ===== USER API END HERE ====== //
@@ -141,12 +181,17 @@ async function run() {
     //====== ALL PRODUCT API START HERE ======= //
 
     app.get("/products", async (req, res) => {
-      const query = {};
-      const products = await productCollection
-        .find(query)
-        .sort({ postDate: -1 })
-        .toArray();
-      res.send(products);
+      try {
+        const query = {};
+        const products = await productCollection
+          .find(query)
+          .sort({ postDate: -1 })
+          .toArray();
+        res.send(products);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // All latest product api
@@ -210,26 +255,37 @@ async function run() {
     */
 
     app.post("/products", async (req, res) => {
-      const doc = req.body;
-      const result = await productCollection.insertOne(doc);
-      res.send(result);
+      try {
+        const doc = req.body;
+        const result = await productCollection.insertOne(doc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // Single product
 
     app.get("/singleproduct/:id", async (req, res) => {
-      const id = req.params.id;
-      const result = await productCollection.findOne({ _id: new ObjectId(id) });
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const result = await productCollection.findOne({
+          _id: new ObjectId(id),
+        });
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // Update Product
     app.patch("/update/product/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const updateFields = req.body;
-
       try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const updateFields = req.body;
         const result = await productCollection.updateOne(filter, {
           $set: updateFields,
         });
@@ -246,10 +302,15 @@ async function run() {
     // Delete Single Product
 
     app.delete("/singleproduct/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await productCollection.deleteOne(filter);
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const result = await productCollection.deleteOne(filter);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // ====== ALL PRODUCT API END HERE ======= //
@@ -259,99 +320,138 @@ async function run() {
     // categories
 
     app.get("/allcategories", async (req, res) => {
-      const result = await categoriesCollection.find({}).toArray();
-      res.send(result);
+      try {
+        const result = await categoriesCollection.find({}).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // product show categories wise
 
     app.get("/category/:categoryName", async (req, res) => {
-      const name = req.params.categoryName;
-      if (name === "All") {
-        const result = await productCollection.find({}).toArray();
-        res.send(result);
-      } else {
-        const result = await productCollection
-          .find({ category: name })
-          .toArray();
-        res.send(result);
+      try {
+        const name = req.params.categoryName;
+        if (name === "All") {
+          const result = await productCollection.find({}).toArray();
+          res.send(result);
+        } else {
+          const result = await productCollection
+            .find({ category: name })
+            .toArray();
+          res.send(result);
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
       }
     });
     // add categories
     app.post("/addcategory", async (req, res) => {
-      const name = req.body.name;
-      const data = {
-        name: name,
-      };
-      const result = await categoriesCollection.insertOne(data);
-      res.send(result);
+      try {
+        const name = req.body.name;
+        const data = {
+          name: name,
+        };
+        const result = await categoriesCollection.insertOne(data);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
     // edit categories
     app.put("/editcategory", async (req, res) => {
-      const id = req.body._id;
-      const name = req.body.name;
-      const filter = { _id: new ObjectId(id) };
-      const option = { upsert: true };
-      const updatedDoc = {
-        $set: {
-          name: name,
-        },
-      };
-      const result = await categoriesCollection.updateOne(
-        filter,
-        updatedDoc,
-        option
-      );
-      res.send(result);
+      try {
+        const id = req.body._id;
+        const name = req.body.name;
+        const filter = { _id: new ObjectId(id) };
+        const option = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            name: name,
+          },
+        };
+        const result = await categoriesCollection.updateOne(
+          filter,
+          updatedDoc,
+          option
+        );
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // delete categories
     app.delete("/deletecategory", async (req, res) => {
-      const id = req.body._id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await categoriesCollection.deleteOne(filter);
-      res.send(result);
+      try {
+        const id = req.body._id;
+        const filter = { _id: new ObjectId(id) };
+        const result = await categoriesCollection.deleteOne(filter);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // ====== ALL CATEGORY API END HERE ======= //
 
     // ====== ALL BANNER IMAGE API START HERE ======= //
     app.get("/allBannerImg", async (req, res) => {
-      const result = await bannerImgCollection.find({}).toArray();
-      res.send(result);
+      try {
+        const result = await bannerImgCollection.find({}).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.post("/addBannerImg", async (req, res) => {
-      const data = req.body;
-      const result = await bannerImgCollection.insertOne(data);
-      res.send(result);
+      try {
+        const data = req.body;
+        const result = await bannerImgCollection.insertOne(data);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.delete("/deleteBannerImg", async (req, res) => {
-      const id = req.body._id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await bannerImgCollection.deleteOne(filter);
-      res.send(result);
+      try {
+        const id = req.body._id;
+        const filter = { _id: new ObjectId(id) };
+        const result = await bannerImgCollection.deleteOne(filter);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.put("/update/banner", async (req, res) => {
-      const id = req.body._id;
-      const name = req.body.name;
-      const bannerImg = req.body.bannerImg;
-      const status = req.body.status;
-      const post_date = req.body.post_date;
-      const filter = { _id: new ObjectId(id) };
-
-      const updatedDoc = {
-        $set: {
-          name: name,
-          bannerImg: bannerImg,
-          status: status,
-          post_date: post_date,
-        },
-      };
-
       try {
+        const id = req.body._id;
+        const name = req.body.name;
+        const bannerImg = req.body.bannerImg;
+        const status = req.body.status;
+        const post_date = req.body.post_date;
+        const filter = { _id: new ObjectId(id) };
+
+        const updatedDoc = {
+          $set: {
+            name: name,
+            bannerImg: bannerImg,
+            status: status,
+            post_date: post_date,
+          },
+        };
         const result = await bannerImgCollection.updateOne(filter, updatedDoc);
         res.send(result);
       } catch (error) {
@@ -365,44 +465,58 @@ async function run() {
     // ====== ALL FIXED IMAGE API START HERE ======= //
 
     app.get("/allFixedImg", async (req, res) => {
-      const result = await fixedImgCollection
-        .find({})
-        .sort({ postDate: -1 })
-        .toArray();
-      res.send(result);
+      try {
+        const result = await fixedImgCollection
+          .find({})
+          .sort({ postDate: -1 })
+          .toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.post("/addFixedImg", async (req, res) => {
-      const data = req.body;
-      const result = await fixedImgCollection.insertOne(data);
-      res.send(result);
+      try {
+        const data = req.body;
+        const result = await fixedImgCollection.insertOne(data);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.delete("/deleteFixedImg", async (req, res) => {
-      const id = req.body._id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await fixedImgCollection.deleteOne(filter);
-      res.send(result);
+      try {
+        const id = req.body._id;
+        const filter = { _id: new ObjectId(id) };
+        const result = await fixedImgCollection.deleteOne(filter);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.put("/update/fixedImg", async (req, res) => {
-      const id = req.body._id;
-      const name = req.body.name;
-      const fixedImg = req.body.fixedImg;
-      const status = req.body.status;
-      const post_date = req.body.post_date;
-      const filter = { _id: new ObjectId(id) };
-
-      const updatedDoc = {
-        $set: {
-          name: name,
-          fixedImg: fixedImg,
-          status: status,
-          post_date: post_date,
-        },
-      };
-
       try {
+        const id = req.body._id;
+        const name = req.body.name;
+        const fixedImg = req.body.fixedImg;
+        const status = req.body.status;
+        const post_date = req.body.post_date;
+        const filter = { _id: new ObjectId(id) };
+
+        const updatedDoc = {
+          $set: {
+            name: name,
+            fixedImg: fixedImg,
+            status: status,
+            post_date: post_date,
+          },
+        };
         const result = await fixedImgCollection.updateOne(filter, updatedDoc);
         res.send(result);
       } catch (error) {
@@ -417,12 +531,17 @@ async function run() {
 
     // get a wishlist
     app.get("/wishlist/:id", async (req, res) => {
-      const { id } = req.params;
-      const { email } = req.query;
-      const query = { productId: id, userEmail: email };
-      const result = await wishListCollection.findOne(query);
-      if (result === null) return res.send({ message: "There is no data" });
-      return res.send(result);
+      try {
+        const { id } = req.params;
+        const { email } = req.query;
+        const query = { productId: id, userEmail: email };
+        const result = await wishListCollection.findOne(query);
+        if (result === null) return res.send({ message: "There is no data" });
+        return res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // get my wishlist in dashboard
@@ -481,20 +600,30 @@ async function run() {
 
     // delete a wishlist
     app.delete("/wishlist/:id", async (req, res) => {
-      const { id } = req.params;
-      const { email } = req.query;
-      const query = { productId: id, userEmail: email };
-      const result = await wishListCollection.deleteOne(query);
-      res.send(result);
+      try {
+        const { id } = req.params;
+        const { email } = req.query;
+        const query = { productId: id, userEmail: email };
+        const result = await wishListCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // Admin All Wishlist
     app.get("/wishlist", async (req, res) => {
-      const wishlist = await wishListCollection
-        .find()
-        .sort({ postDate: -1 })
-        .toArray();
-      res.send(wishlist);
+      try {
+        const wishlist = await wishListCollection
+          .find()
+          .sort({ postDate: -1 })
+          .toArray();
+        res.send(wishlist);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // ======== ALL WISH LIST API End Here ======== //
@@ -503,14 +632,19 @@ async function run() {
 
     // get a cart
     app.get("/cart/:id", async (req, res) => {
-      const { id } = req.params;
-      const { email } = req.query;
-      const query = { productId: id, userEmail: email };
-      const result = await cartCollection.findOne(query);
-      if (result) {
-        res.json(result);
-      } else {
-        res.json({}); // Send an empty object if the product is not in the cart
+      try {
+        const { id } = req.params;
+        const { email } = req.query;
+        const query = { productId: id, userEmail: email };
+        const result = await cartCollection.findOne(query);
+        if (result) {
+          res.json(result);
+        } else {
+          res.json({}); // Send an empty object if the product is not in the cart
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
       }
     });
     // get mycart in dashboard
@@ -548,34 +682,38 @@ async function run() {
 
     // add cart
     app.post("/add-cart", async (req, res) => {
-      const cart = req.body;
-      // console.log(req.body);
-      const query = {
-        userId: req.body.userId,
-        userEmail: req.body.userEmail,
-        productId: req.body.productId,
-      };
+      try {
+        const cart = req.body;
+        // console.log(req.body);
+        const query = {
+          userId: req.body.userId,
+          userEmail: req.body.userEmail,
+          productId: req.body.productId,
+        };
 
-      const alreadyAddedCart = await cartCollection.findOne(query);
+        const alreadyAddedCart = await cartCollection.findOne(query);
 
-      if (alreadyAddedCart)
-        return res.send({
-          message: "This product already added in your cart",
-        });
+        if (alreadyAddedCart)
+          return res.send({
+            message: "This product already added in your cart",
+          });
 
-      const result = await cartCollection.insertOne(cart);
+        const result = await cartCollection.insertOne(cart);
 
-      res.send(result);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // update cart quantity
 
     app.put("/cart/:id", async (req, res) => {
-      const { id } = req.params;
-      const { email } = req.query;
-      const { quantity } = req.body;
-
       try {
+        const { id } = req.params;
+        const { email } = req.query;
+        const { quantity } = req.body;
         const query = { productId: id, userEmail: email };
         const updatedCart = await cartCollection.findOneAndUpdate(
           query,
@@ -595,11 +733,16 @@ async function run() {
     });
     // delete a cart
     app.delete("/cart/:id", async (req, res) => {
-      const { id } = req.params;
-      const { email } = req.query;
-      const query = { productId: id, userEmail: email };
-      const result = await cartCollection.deleteOne(query);
-      res.send(result);
+      try {
+        const { id } = req.params;
+        const { email } = req.query;
+        const query = { productId: id, userEmail: email };
+        const result = await cartCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
     // ALL CART API END HERE ===== //
 
@@ -607,13 +750,18 @@ async function run() {
 
     // all Qna get
     app.get("/all-qna/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { product_id: id };
-      const result = await qnaCollection
-        .find(query)
-        .sort({ postDate: -1 })
-        .toArray();
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const query = { product_id: id };
+        const result = await qnaCollection
+          .find(query)
+          .sort({ postDate: -1 })
+          .toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.get("/dashboard/all-qna/:email", async (req, res) => {
@@ -649,91 +797,173 @@ async function run() {
       }
     });
     app.post("/ask-question", async (req, res) => {
-      const data = req.body;
-      const result = await qnaCollection.insertOne(data);
-      res.send(result);
+      try {
+        const data = req.body;
+        const result = await qnaCollection.insertOne(data);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.delete("/delete-qna", async (req, res) => {
-      const id = req.body._id;
-      const userEmail = req.body.email; // Get user email from request body
-      const filter = { _id: new ObjectId(id), email: userEmail }; // Add email to filter
-      const result = await qnaCollection.deleteOne(filter);
+      try {
+        const id = req.body._id;
+        const userEmail = req.body.email; // Get user email from request body
+        const filter = { _id: new ObjectId(id), email: userEmail }; // Add email to filter
+        const result = await qnaCollection.deleteOne(filter);
 
-      if (result.deletedCount === 1) {
-        res.send({ success: true, message: "Delete successful" });
-      } else {
-        res
-          .status(400)
-          .send({ success: false, message: "Unauthorized or item not found" });
+        if (result.deletedCount === 1) {
+          res.send({ success: true, message: "Delete successful" });
+        } else {
+          res.status(400).send({
+            success: false,
+            message: "Unauthorized or item not found",
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
       }
     });
 
     app.put("/reply-question", async (req, res) => {
-      const id = req.body._id;
-      const reply = req.body.reply;
-      const replyDate = req.body.replyDate;
-      const filter = { _id: new ObjectId(id) };
-      const option = { upsert: true };
-      const updatedDoc = {
-        $set: {
-          reply: reply,
-          replyDate: replyDate,
-        },
-      };
-      const result = await qnaCollection.updateOne(filter, updatedDoc, option);
-      res.send(result);
+      try {
+        const id = req.body._id;
+        const reply = req.body.reply;
+        const replyDate = req.body.replyDate;
+        const filter = { _id: new ObjectId(id) };
+        const option = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            reply: reply,
+            replyDate: replyDate,
+          },
+        };
+        const result = await qnaCollection.updateOne(
+          filter,
+          updatedDoc,
+          option
+        );
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
     app.put("/edit-question", async (req, res) => {
-      const id = req.body._id;
-      const question = req.body.question;
-      const postDate = req.body.postDate;
-      const filter = { _id: new ObjectId(id) };
-      const option = { upsert: true };
-      const updatedDoc = {
-        $set: {
-          question,
-          postDate,
-        },
-      };
-      const result = await qnaCollection.updateOne(filter, updatedDoc, option);
-      res.send(result);
+      try {
+        const id = req.body._id;
+        const question = req.body.question;
+        const postDate = req.body.postDate;
+        const filter = { _id: new ObjectId(id) };
+        const option = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            question,
+            postDate,
+          },
+        };
+        const result = await qnaCollection.updateOne(
+          filter,
+          updatedDoc,
+          option
+        );
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
     // ====== ALL QnA API END HERE ======= //
     // ====== ALL REVIEW API START HERE ======= //
-    app.post("/submit-review", async (req, res) => {
-      const { productId, userId, review, rating, title } = req.body;
 
-      // Validate incoming data (you can add more validation logic as needed)
-      if (!productId || !userId || !review || !rating) {
-        return res.status(400).json({ error: "Invalid data provided" });
+    app.get("/review/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { email } = req.query;
+        const query = { productId: id, email: email };
+        const result = await reviewCollection.findOne(query);
+        if (result) {
+          res.json(result);
+        } else {
+          res.json({}); // Send an empty object if the product is not in the cart
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
       }
-
-      // Create a new review object
-      const productReview = {
-        productId: productId,
-        userId: userId,
-        review: review,
-        rating: rating,
-        title: title || "", // Optional: If title is not provided, it will be an empty string
-        timestamp: new Date().toISOString(),
-      };
-
-      const result = await reviewCollection.insertOne(productReview);
-      res.send(result);
-
-      // Respond with success message
     });
 
-    app.get("/product-review", async (req, res) => {
-      const productReview = await reviewCollection.find().toArray();
-      res.send(productReview);
+    app.post("/submit-review", async (req, res) => {
+      try {
+        const { productId, email, review, rating, postDate } = req.body;
+
+        // Validate incoming data (you can add more validation logic as needed)
+        if (!productId || !email || !review || !rating) {
+          return res.status(400).json({ error: "Invalid data provided" });
+        }
+
+        // Create a new review object
+        const productReview = {
+          productId: productId,
+          email: email,
+          review: review,
+          rating: rating,
+          postDate: postDate,
+        };
+
+        const result = await reviewCollection.insertOne(productReview);
+        res.send(result);
+        console.log(result);
+
+        // Respond with success message
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
+
+    app.get("/myreview/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        const query = { email: email };
+        const cursor = reviewCollection.find(query);
+        const review = await cursor.sort({ postDate: -1 }).toArray();
+
+        // Extracting product IDs from the review
+        const productIds = review.map((item) => item.productId);
+
+        // Finding products that match the extracted product IDs
+        const products = await productCollection
+          .find({ _id: { $in: productIds.map((id) => new ObjectId(id)) } })
+          .toArray();
+
+        // Merging review items with corresponding product details
+        const mergedData = review.map((item) => {
+          const product = products.find(
+            (product) => product._id.toString() === item.productId
+          );
+          return { ...item, product };
+        });
+
+        res.send(mergedData);
+        // console.log(mergedData);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
     // ====== ALL REVIEW API END HERE ======= //
   } finally {
   }
 }
-run().catch((error) => console.error(error));
+run().catch((error) => {
+  console.error(error);
+  res.status(500).json({ error: "Internal server error" });
+});
 
 app.listen(port, () => {
   console.log(`Shovon Gallery server is running on ${port}`);
