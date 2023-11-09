@@ -878,8 +878,88 @@ async function run() {
     });
     // ====== ALL QnA API END HERE ======= //
     // ====== ALL REVIEW API START HERE ======= //
-
+    // single review for checking same product review or not
     app.get("/review/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { email } = req.query;
+        const query = { productId: id, email: email };
+        const result = await reviewCollection.findOne(query);
+        if (result) {
+          res.json(result);
+          console.log(result);
+        } else {
+          res.json({}); // Send an empty object if the product is not in the review
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+    // all Review get
+    app.get("/all-review/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { productId: id };
+        const review = await reviewCollection
+          .find(query)
+          .sort({ postDate: -1 })
+          .toArray();
+
+        const userEmails = review.map((item) => item.email);
+        const users = await usersCollection
+          .find({ email: { $in: userEmails.map((e) => e) } })
+          .toArray();
+        const mergedData = review.map((item) => {
+          const user = users.find((user) => user.email === item.email);
+          return { ...item, user };
+        });
+        res.send(mergedData);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+    app.get("/myreview/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        const query = { email: email };
+        const cursor = reviewCollection.find(query);
+        const review = await cursor.sort({ postDate: -1 }).toArray();
+
+        // Extracting product IDs from the review
+        const productIds = review.map((item) => item.productId);
+
+        // Extracting user email from the review
+        const userEmails = review.map((item) => item.email);
+
+        // Finding products that match the extracted product IDs
+        const products = await productCollection
+          .find({ _id: { $in: productIds.map((id) => new ObjectId(id)) } })
+          .toArray();
+        const users = await usersCollection
+          .find({ email: { $in: userEmails.map((e) => e) } })
+          .toArray();
+
+        // Merging review items with corresponding product details
+        const mergedData = review.map((item) => {
+          const product = products.find(
+            (product) => product._id.toString() === item.productId
+          );
+
+          const user = users.find((user) => user.email === item.email);
+          return { ...item, product, user };
+        });
+
+        res.send(mergedData);
+        // console.log(mergedData);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    app.get("/dashboard/review/:id", async (req, res) => {
       try {
         const { id } = req.params;
         const { email } = req.query;
@@ -898,17 +978,28 @@ async function run() {
 
     app.post("/submit-review", async (req, res) => {
       try {
-        const { productId, email, review, rating, postDate } = req.body;
+        const { productId, email, title, review, rating, postDate } = req.body;
 
         // Validate incoming data (you can add more validation logic as needed)
         if (!productId || !email || !review || !rating) {
           return res.status(400).json({ error: "Invalid data provided" });
         }
-
+        const query = {
+          email: email,
+          productId: productId,
+        };
+        const alreadyAddedReview = await reviewCollection.findOne(query);
+        if (alreadyAddedReview)
+          return res.send({
+            message:
+              "Your review already submitted of this product, check your review in dashboard ",
+          });
+        console.log(alreadyAddedReview);
         // Create a new review object
         const productReview = {
           productId: productId,
           email: email,
+          title: title,
           review: review,
           rating: rating,
           postDate: postDate,
@@ -925,31 +1016,55 @@ async function run() {
       }
     });
 
-    app.get("/myreview/:email", async (req, res) => {
+    app.delete("/delete-review", async (req, res) => {
       try {
-        const email = req.params.email;
-        const query = { email: email };
-        const cursor = reviewCollection.find(query);
-        const review = await cursor.sort({ postDate: -1 }).toArray();
+        const id = req.body._id;
+        const userEmail = req.body.email; // Get user email from request body
+        const filter = { _id: new ObjectId(id), email: userEmail }; // Add email to filter
+        const result = await reviewCollection.deleteOne(filter);
 
-        // Extracting product IDs from the review
-        const productIds = review.map((item) => item.productId);
+        if (result.deletedCount === 1) {
+          res.send({ success: true, message: "Delete successful" });
+        } else {
+          res.status(400).send({
+            success: false,
+            message: "Unauthorized or item not found",
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
 
-        // Finding products that match the extracted product IDs
-        const products = await productCollection
-          .find({ _id: { $in: productIds.map((id) => new ObjectId(id)) } })
-          .toArray();
+    app.put("/edit-review", async (req, res) => {
+      try {
+        const { _id, productId, email, title, review, rating, postDate } =
+          req.body;
+        // console.log(productId, email, title, review, rating, postDate);
+        const filter = { _id: new ObjectId(_id), email: email };
 
-        // Merging review items with corresponding product details
-        const mergedData = review.map((item) => {
-          const product = products.find(
-            (product) => product._id.toString() === item.productId
-          );
-          return { ...item, product };
-        });
-
-        res.send(mergedData);
-        // console.log(mergedData);
+        if (!productId || !email || !review || !rating) {
+          return res.status(400).json({ error: "Invalid data provided" });
+        }
+        const option = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            productId,
+            email,
+            title,
+            review,
+            rating,
+            postDate,
+          },
+        };
+        const result = await reviewCollection.updateOne(
+          filter,
+          updatedDoc,
+          option
+        );
+        res.send(result);
+        console.log(result);
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal server error" });
