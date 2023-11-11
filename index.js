@@ -959,22 +959,21 @@ async function run() {
       }
     });
 
-    app.get("/dashboard/review/:id", async (req, res) => {
-      try {
-        const { id } = req.params;
-        const { email } = req.query;
-        const query = { productId: id, email: email };
-        const result = await reviewCollection.findOne(query);
-        if (result) {
-          res.json(result);
-        } else {
-          res.json({}); // Send an empty object if the product is not in the cart
-        }
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error" });
-      }
-    });
+    // app.get("/dashboard/review/:email", async (req, res) => {
+    //   try {
+    //     const { email } = req.query;
+    //     const query = { productId: id, email: email };
+    //     const result = await reviewCollection.findOne(query);
+    //     if (result) {
+    //       res.json(result);
+    //     } else {
+    //       res.json({}); // Send an empty object if the product is not in the cart
+    //     }
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).json({ error: "Internal server error" });
+    //   }
+    // });
 
     app.post("/submit-review", async (req, res) => {
       try {
