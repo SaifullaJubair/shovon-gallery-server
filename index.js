@@ -26,6 +26,9 @@ async function run() {
     //---------All collection here---------
     const usersCollection = client.db("ShovonGallery").collection("users");
     const productCollection = client.db("ShovonGallery").collection("products");
+    const checkoutCollection = client
+      .db("ShovonGallery")
+      .collection("checkout");
     const bangladeshCollection = client
       .db("ShovonGallery")
       .collection("bangladesh");
@@ -1092,6 +1095,90 @@ async function run() {
       }
     });
     // ====== ALL BANGLADESH API END HERE ======= //
+    // ====== ALL CHECKOUT API START HERE ======= //
+    app.post("/checkout", async (req, res) => {
+      try {
+        const {
+          userName,
+          userEmail,
+          division,
+          district,
+          address,
+          number,
+          cartProducts,
+          totalAmount,
+        } = req.body;
+
+        const checkoutData = {
+          userName,
+          userEmail,
+          division,
+          district,
+          address,
+          number,
+          cartProducts,
+          totalAmount,
+          checkoutDate: new Date(),
+        };
+
+        const result = await checkoutCollection.insertOne(checkoutData);
+
+        if (result.acknowledged) {
+          // Clear the user's cart after successful checkout
+          const deleteCartResult = await cartCollection.deleteMany({
+            userEmail: userEmail,
+          });
+
+          console.log(result);
+          console.log(deleteCartResult);
+
+          if (deleteCartResult.deletedCount > 0) {
+            res
+              .status(201)
+              .json({ success: true, message: "Checkout successful" });
+          } else {
+            console.error("No items deleted from the cart.");
+            res
+              .status(500)
+              .json({ success: false, error: "Failed to delete cart items" });
+          }
+        } else {
+          res
+            .status(500)
+            .json({ success: false, error: "Failed to process the checkout" });
+        }
+      } catch (error) {
+        console.error("Error during checkout:", error);
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
+      }
+    });
+    // Add the following route to your Express server
+
+    // Get checkout data by user email
+    app.get("/checkout/:email", async (req, res) => {
+      try {
+        const userEmail = req.params.email;
+
+        // Fetch checkout data based on user email
+        const checkoutData = await checkoutCollection
+          .find({ userEmail })
+          .toArray();
+
+        if (!checkoutData) {
+          // If no checkout data found for the user, send a 404 response
+          return res.status(404).json({ error: "Checkout data not found" });
+        }
+
+        res.json(checkoutData);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    // ====== ALL CHECKOUT API END HERE ======= //
   } finally {
   }
 }
