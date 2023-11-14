@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const SSLCommerzPayment = require("sslcommerz-lts");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -26,9 +27,7 @@ async function run() {
     //---------All collection here---------
     const usersCollection = client.db("ShovonGallery").collection("users");
     const productCollection = client.db("ShovonGallery").collection("products");
-    const checkoutCollection = client
-      .db("ShovonGallery")
-      .collection("checkout");
+    const ordersCollection = client.db("ShovonGallery").collection("orders");
     const bangladeshCollection = client
       .db("ShovonGallery")
       .collection("bangladesh");
@@ -112,8 +111,12 @@ async function run() {
         const option = { upsert: true };
         const updatedDoc = {
           $set: {
+            name: data?.name,
             address: data?.address,
             mobileNumber: data?.mobileNumber,
+            division: data?.division,
+            district: data?.district,
+            postDate: data.postDate,
           },
         };
         const result = await usersCollection.updateOne(
@@ -1095,58 +1098,57 @@ async function run() {
       }
     });
     // ====== ALL BANGLADESH API END HERE ======= //
-    // ====== ALL CHECKOUT API START HERE ======= //
+    // ====== ALL ORDER API START HERE ======= //
     app.post("/checkout", async (req, res) => {
       try {
-        const {
-          userName,
-          userEmail,
-          division,
-          district,
-          address,
-          number,
-          cartProducts,
-          totalAmount,
-        } = req.body;
+        const order = req.body;
 
-        const checkoutData = {
-          userName,
-          userEmail,
-          division,
-          district,
-          address,
-          number,
-          cartProducts,
-          totalAmount,
-          checkoutDate: new Date(),
+        const transactionId = new ObjectId().toString();
+        const data = {
+          total_amount: order.totalAmount,
+          currency: "BDT",
+          tran_id: transactionId, // use unique tran_id for each api call
+          cus_name: order.userName,
+          cus_email: order.userEmail,
+          cus_add1: order.address,
+          cartProducts: order.cartProducts,
+          cus_city: order.district,
+          cus_state: order.division,
+          cus_phone: order.number,
+          success_url: `http://localhost:5000/payment/success?transactionId=${transactionId}&userEmail=${order.userEmail}`,
+          fail_url: "http://localhost:5000/payment/fail",
+          cancel_url: "http://localhost:5000/payment/cancel",
+          ipn_url: "http://localhost:3030/ipn",
+          shipping_method: "Courier",
+          product_name: "Computer",
+          product_category: "Electronic",
+          product_profile: "general",
+          cus_add2: "",
+          cus_postcode: "",
+          cus_country: "Bangladesh",
+          cus_fax: "",
+          ship_name: "Customer Name",
+          ship_add1: "Dhaka",
+          ship_add2: "Dhaka",
+          ship_city: "Dhaka",
+          ship_state: "Dhaka",
+          ship_postcode: 1000,
+          ship_country: "Bangladesh",
         };
 
-        const result = await checkoutCollection.insertOne(checkoutData);
-
-        if (result.acknowledged) {
-          // Clear the user's cart after successful checkout
-          const deleteCartResult = await cartCollection.deleteMany({
-            userEmail: userEmail,
+        const sslcz = new SSLCommerzPayment(store_id, store_password, is_live);
+        sslcz.init(data).then((apiResponse) => {
+          // Redirect the user to payment gateway
+          let GatewayPageURL = apiResponse.GatewayPageURL;
+          // console.log(apiResponse);
+          ordersCollection.insertOne({
+            ...order,
+            transactionId,
+            paid: false,
+            delivered: "Processing",
           });
-
-          console.log(result);
-          console.log(deleteCartResult);
-
-          if (deleteCartResult.deletedCount > 0) {
-            res
-              .status(201)
-              .json({ success: true, message: "Checkout successful" });
-          } else {
-            console.error("No items deleted from the cart.");
-            res
-              .status(500)
-              .json({ success: false, error: "Failed to delete cart items" });
-          }
-        } else {
-          res
-            .status(500)
-            .json({ success: false, error: "Failed to process the checkout" });
-        }
+          res.send({ url: GatewayPageURL });
+        });
       } catch (error) {
         console.error("Error during checkout:", error);
         res
@@ -1154,16 +1156,66 @@ async function run() {
           .json({ success: false, error: "Internal server error" });
       }
     });
-    // Add the following route to your Express server
+
+    app.post("/payment/success", async (req, res) => {
+      const { transactionId, userEmail } = req.query;
+      // console.log(transactionId, userEmail);
+      const currentDate = new Date();
+      const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZoneName: "short",
+        timeZone: "Asia/Dhaka",
+      };
+      const formattedDate = new Intl.DateTimeFormat("en-US", options).format(
+        currentDate
+      );
+      const result = await ordersCollection.updateOne(
+        { transactionId },
+        { $set: { paid: true, paymentDate: formattedDate } }
+      );
+      if (result.modifiedCount > 0) {
+        res.redirect(
+          `http://localhost:3000/payment/success?transactionId=${transactionId}`
+        );
+
+        const deleteCartResult = await cartCollection.deleteMany({
+          userEmail: userEmail,
+        });
+      }
+    });
 
     // Get checkout data by user email
-    app.get("/checkout/:email", async (req, res) => {
+    app.get("/orders/by-transaction-id/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        // Fetch checkout data based on user email
+        const orders = await ordersCollection.findOne({ transactionId: id });
+
+        if (!orders) {
+          // If no checkout data found for the user, send a 404 response
+          return res.status(404).json({ error: "Checkout data not found" });
+        }
+
+        res.json(orders);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    app.get("/orders/:email", async (req, res) => {
       try {
         const userEmail = req.params.email;
 
         // Fetch checkout data based on user email
-        const checkoutData = await checkoutCollection
+        const checkoutData = await ordersCollection
           .find({ userEmail })
+          .sort({ paymentDate: -1 })
           .toArray();
 
         if (!checkoutData) {
@@ -1171,13 +1223,61 @@ async function run() {
           return res.status(404).json({ error: "Checkout data not found" });
         }
 
-        res.json(checkoutData);
+        res.send(checkoutData);
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal server error" });
       }
     });
 
+    app.get("/all-orders", async (req, res) => {
+      try {
+        const query = {};
+        const orders = await ordersCollection
+          .find(query)
+          .sort({ paymentDate: -1 })
+          .toArray();
+        res.send(orders);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    app.put("/update-delivery-status/:transactionId", async (req, res) => {
+      try {
+        const { transactionId } = req.params;
+        const { delivered } = req.body;
+        const query = { transactionId };
+        const currentDate = new Date();
+        const options = {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZoneName: "short",
+          timeZone: "Asia/Dhaka",
+        };
+        const formattedDate = new Intl.DateTimeFormat("en-US", options).format(
+          currentDate
+        );
+        const updatedDeliveryStatus = await ordersCollection.findOneAndUpdate(
+          query,
+          { $set: { delivered: delivered, deliveredDate: formattedDate } },
+          { returnDocument: "after" } // Returns the updated document
+        );
+
+        if (updatedDeliveryStatus.value) {
+          res.json(updatedDeliveryStatus.value);
+        } else {
+          res.status(404).json({ error: "Order item not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
     // ====== ALL CHECKOUT API END HERE ======= //
   } finally {
   }
