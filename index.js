@@ -1116,7 +1116,7 @@ async function run() {
           cus_state: order.division,
           cus_phone: order.number,
           success_url: `http://localhost:5000/payment/success?transactionId=${transactionId}&userEmail=${order.userEmail}`,
-          fail_url: "http://localhost:5000/payment/fail",
+          fail_url: `http://localhost:5000/payment/fail?transactionId=${transactionId}`,
           cancel_url: "http://localhost:5000/payment/cancel",
           ipn_url: "http://localhost:3030/ipn",
           shipping_method: "Courier",
@@ -1173,6 +1173,9 @@ async function run() {
       const formattedDate = new Intl.DateTimeFormat("en-US", options).format(
         currentDate
       );
+      if (!transactionId) {
+        return res.redirect("http://localhost:3000/payment/fail");
+      }
       const result = await ordersCollection.updateOne(
         { transactionId },
         { $set: { paid: true, paymentDate: formattedDate } }
@@ -1187,7 +1190,16 @@ async function run() {
         });
       }
     });
-
+    app.post("/payment/fail", async (req, res) => {
+      const { transactionId } = req.query;
+      if (!transactionId) {
+        return res.redirect("http://localhost:3000/payment/fail");
+      }
+      const result = await ordersCollection.deleteOne({ transactionId });
+      if (result.deletedCount) {
+        res.redirect("http://localhost:3000/payment/fail");
+      }
+    });
     // Get checkout data by user email
     app.get("/orders/by-transaction-id/:id", async (req, res) => {
       try {
