@@ -12,6 +12,8 @@ app.use(express.json());
 
 const store_id = process.env.STORE_ID;
 const store_password = process.env.STORE_PASSWORD;
+const client_link = process.env.CLIENT_LINK;
+const server_link = process.env.SERVER_LINK;
 const is_live = false;
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.xouf86z.mongodb.net/?retryWrites=true&w=majority`;
@@ -1115,9 +1117,9 @@ async function run() {
           cus_city: order.district,
           cus_state: order.division,
           cus_phone: order.number,
-          success_url: `http://localhost:5000/payment/success?transactionId=${transactionId}&userEmail=${order.userEmail}`,
-          fail_url: `http://localhost:5000/payment/fail?transactionId=${transactionId}`,
-          cancel_url: "http://localhost:5000/payment/cancel",
+          success_url: `${server_link}/payment/success?transactionId=${transactionId}&userEmail=${order.userEmail}`,
+          fail_url: `${server_link}/payment/fail?transactionId=${transactionId}`,
+          cancel_url: `${server_link}/payment/cancel`,
           ipn_url: "http://localhost:3030/ipn",
           shipping_method: "Courier",
           product_name: "Computer",
@@ -1174,7 +1176,7 @@ async function run() {
         currentDate
       );
       if (!transactionId) {
-        return res.redirect("http://localhost:3000/payment/fail");
+        return res.redirect(`${client_link}/payment/fail`);
       }
       const result = await ordersCollection.updateOne(
         { transactionId },
@@ -1182,7 +1184,7 @@ async function run() {
       );
       if (result.modifiedCount > 0) {
         res.redirect(
-          `http://localhost:3000/payment/success?transactionId=${transactionId}`
+          `${client_link}/payment/success?transactionId=${transactionId}`
         );
 
         const deleteCartResult = await cartCollection.deleteMany({
@@ -1193,11 +1195,11 @@ async function run() {
     app.post("/payment/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (!transactionId) {
-        return res.redirect("http://localhost:3000/payment/fail");
+        return res.redirect(`${client_link}/payment/fail`);
       }
       const result = await ordersCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
-        res.redirect("http://localhost:3000/payment/fail");
+        res.redirect(`${client_link}/payment/fail`);
       }
     });
     // Get checkout data by user email
