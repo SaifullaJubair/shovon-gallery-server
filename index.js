@@ -1119,7 +1119,7 @@ async function run() {
           cus_phone: order.number,
           success_url: `${server_link}/payment/success?transactionId=${transactionId}&userEmail=${order.userEmail}`,
           fail_url: `${server_link}/payment/fail?transactionId=${transactionId}`,
-          cancel_url: `${server_link}/payment/cancel`,
+          cancel_url: `${server_link}/payment/cancel?transactionId=${transactionId}`,
           ipn_url: "http://localhost:3030/ipn",
           shipping_method: "Courier",
           product_name: "Computer",
@@ -1202,6 +1202,17 @@ async function run() {
         res.redirect(`${client_link}/payment/fail`);
       }
     });
+    app.post("/payment/cancel", async (req, res) => {
+      const { transactionId } = req.query;
+      if (!transactionId) {
+        return res.redirect(`${client_link}/cart`);
+      }
+      const result = await ordersCollection.deleteOne({ transactionId });
+      if (result.deletedCount) {
+        res.redirect(`${client_link}/cart`);
+      }
+    });
+
     // Get checkout data by user email
     app.get("/orders/by-transaction-id/:id", async (req, res) => {
       try {
